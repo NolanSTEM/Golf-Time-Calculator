@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Golf Leave Time Calculator</title>
+    <style>
+        /* --- DESIGN SYSTEM & VARIANT COLORS --- */
+        :root {
+            --primary-forest: #1b4332;
+            --primary-hover: #2d6a4f;
+            --accent-gold: #c5a059;
+            --accent-gold-light: #e6c587;
+            --sage-green: #52b788;
+            --bg-cream: #fdfbf7;
+            --text-dark: #2d312e;
+            --text-muted: #5f6460;
+            --card-glass: rgba(255, 255, 255, 0.88);
+            --card-shadow: 0 8px 32px 0 rgba(27, 67, 50, 0.08);
+            --border-style: 1px solid rgba(27, 67, 50, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- BACKGROUND SCENERY --- */
+        body {
+            background: 
+                radial-gradient(circle at 80% 20%, rgba(183, 228, 199, 0.4) 0%, transparent 40%),
+                radial-gradient(circle at 20% 80%, rgba(216, 243, 220, 0.5) 0%, transparent 50%),
+                linear-gradient(180deg, #d8f3dc 0%, #fdfbf7 60%, #e9ecef 100%);
+            background-attachment: fixed;
+            color: var(--text-dark);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* --- WRAPPER CONTEXT --- */
+        .app-container {
+            width: 100%;
+            max-width: 640px;
+            opacity: 0;
+            transform: translateY(15px);
+            animation: fadeInApp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            position: relative;
+        }
+
+        /* --- HEADER SECTION --- */
+        header {
+            text-align: center;
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        /* --- SETTINGS ICON BUTTON --- */
+        .settings-btn {
+            position: absolute;
+            top: 0;
+            right: 0;
+            background: rgba(27, 67, 50, 0.06);
+            border: 1px solid rgba(27, 67, 50, 0.1);
+            color: var(--primary-forest);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .settings-btn:hover {
+            background: var(--primary-forest);
+            color: #ffffff;
+            transform: scale(1.05);
+        }
+
+        /* --- SETTINGS MODAL / PANEL --- */
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .settings-content {
+            background: var(--bg-cream);
+            border-radius: 18px;
+            padding: 24px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.2);
+            border: 2px solid var(--accent-gold);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .settings-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .settings-header h2 {
+            font-size: 1.4rem;
+            color: var(--primary-forest);
+        }
+
+        .close-settings {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .settings-section-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            color: var(--primary-forest);
+            margin: 15px 0 10px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid rgba(27,67,50,0.1);
+            padding-bottom: 4px;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px;
+        }
+
+        .setting-row label {
+            font-size: 0.9rem;
+            color: var(--text-dark);
+            flex: 1;
+        }
+
+        .setting-row input {
+            width: 100px;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(27, 67, 50, 0.2);
+            font-size: 1rem;
+            text-align: center;
+            background: #ffffff;
+        }
+
+        .save-settings-btn {
+            width: 100%;
+            background: var(--primary-forest);
+            color: #ffffff;
+            border: none;
+            border-radius: 10px;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: background 0.2s;
+        }
+
+        .save-settings-btn:hover {
+            background: var(--primary-hover);
+        }
+
+        .live-clock-badge {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(27, 67, 50, 0.06);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--primary-forest);
+            margin-bottom: 12px;
+            border: 1px solid rgba(27, 67, 50, 0.05);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--primary-forest);
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* --- FORM CARDS --- */
+        .golf-card {
+            background: var(--card-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 24px;
+            margin-bottom: 20px;
+            box-shadow: var(--card-shadow);
+            border: var(--border-style);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card-label {
+            display: block;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: var(--primary-forest);
+            margin-bottom: 14px;
+        }
+
+        /* Inputs & Dropdowns */
+        .input-wrapper {
+            position: relative;
+        }
+
+        input[type="time"], select {
+            width: 100%;
+            padding: 14px 16px;
+            font-size: 1.1rem;
+            border-radius: 10px;
+            border: 2px solid rgba(27, 67, 50, 0.15);
+            background-color: #ffffff;
+            color: var(--text-dark);
+            outline: none;
+            transition: all 0.25s ease;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        input[type="time"]:focus, select:focus {
+            border-color: var(--primary-forest);
+            box-shadow: 0 0 0 4px rgba(27, 67, 50, 0.1);
+        }
+
+        /* Custom dropdown arrow marker */
+        .select-wrapper::after {
+            content: "▼";
+            font-size: 0.8rem;
+            color: var(--primary-forest);
+            position: absolute;
+            right: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+
+        /* --- PREPARATION CHOICE SELECTION --- */
+        .prep-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .prep-card {
+            background: #ffffff;
+            border: 2px solid rgba(27, 67, 50, 0.1);
+            border-radius: 12px;
+            padding: 16px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .prep-card:hover {
+            border-color: var(--primary-forest);
+            transform: translateY(-2px);
+        }
+
+        .prep-card.selected {
+            border-color: var(--accent-gold);
+            background: #fffdf9;
+            box-shadow: 0 8px 20px rgba(197, 160, 89, 0.2);
+            transform: translateY(-5px);
+        }
+
+        .prep-card .icon {
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+        }
+
+        .prep-card .title {
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+
+        .prep-card .desc {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .prep-card .time-tag {
+            background: rgba(197, 160, 89, 0.15);
+            color: #8c6d23;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 4px 8px;
+            border-radius: 6px;
+            margin-top: auto;
+        }
+
+        .prep-card.selected .time-tag {
+            background: var(--accent-gold);
+            color: #ffffff;
+        }
+
+        /* --- ACTION BUTTON --- */
+        .btn-calculate {
+            width: 100%;
+            background: linear-gradient(135deg, var(--primary-forest) 0%, var(--primary-hover) 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 14px;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(27, 67, 50, 0.15);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            letter-spacing: 0.5px;
+        }
+
+        .btn-calculate:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(27, 67, 50, 0.25);
+        }
+
+        .btn-calculate:active {
+            transform: translateY(0px);
+        }
+
+        /* --- RESULTS VIEWER --- */
+        .result-container {
+            display: none;
+            margin-top: 25px;
+            animation: slideUpResult 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .result-card {
+            background: var(--card-glass);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: var(--card-shadow);
+            border: 2px solid var(--accent-gold);
+            text-align: center;
+        }
+
+        .result-title {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--accent-gold);
+            margin-bottom: 8px;
+            font-weight: 700;
+        }
+
+        .leave-time-display {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--primary-forest);
+            margin: 10px 0;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -1px;
+        }
+
+        /* Warnings Status */
+        .status-banner {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 16px;
+            border-radius: 30px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .status-banner.schedule {
+            background: rgba(82, 183, 136, 0.15);
+            color: var(--primary-hover);
+            border: 1px solid rgba(82, 183, 136, 0.25);
+        }
+
+        .status-banner.late {
+            background: rgba(230, 75, 75, 0.15);
+            color: #c92a2a;
+            border: 1px solid rgba(230, 75, 75, 0.25);
+        }
+
+        .countdown-text {
+            font-size: 1rem;
+            color: var(--text-muted);
+            margin-bottom: 22px;
+            font-style: italic;
+        }
+
+        .breakdown-divider {
+            height: 1px;
+            background: rgba(27, 67, 50, 0.1);
+            margin: 20px 0;
+        }
+
+        /* Details list layout */
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--primary-forest);
+        }
+
+        /* --- ANIMATIONS TIMELINE --- */
+        @keyframes fadeInApp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUpResult {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseWarning {
+            0% { opacity: 0.9; }
+            50% { opacity: 1; transform: scale(1.02); }
+            100% { opacity: 0.9; }
+        }
+
+        /* Responsive UI Optimization */
+        @media (max-width: 480px) {
+            h1 { font-size: 1.8rem; }
+            .prep-grid { grid-template-columns: 1fr; gap: 10px; }
+            .prep-card { flex-direction: row; text-align: left; padding: 12px 16px; }
+            .prep-card .icon { margin-bottom: 0; margin-right: 12px; }
+            .prep-card .desc { display: none; }
+            .prep-card .time-tag { margin-top: 0; margin-left: auto; }
+            .leave-time-display { font-size: 2.8rem; }
+            .details-grid { grid-template-columns: 1fr; gap: 12px; text-align: left; }
+            .detail-item { display: flex; justify-content: space-between; align-items: center; }
+            .detail-label { margin-bottom: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        
+        <header>
+            <button class="settings-btn" onclick="toggleSettingsModal()" title="Settings">⛭</button>
+            <div class="live-clock-badge">
+                 Current Time: <span id="live-clock">--:--:-- AM</span>
+            </div>
+            <h1> Golf Leave Calculator</h1>
+            <p class="subtitle">Never be late for your tee time</p>
+        </header>
+
+        <main>
+            <div class="golf-card">
+                <label class="card-label" for="tee-time">Tee Time</label>
+                <div class="input-wrapper">
+                    <input type="time" id="tee-time" required oninput="hideResultCard()">
+                </div>
+            </div>
+
+            <div class="golf-card">
+                <label class="card-label" for="course-select">Choose Golf Course</label>
+                <div class="input-wrapper select-wrapper">
+                    <select id="course-select" onchange="hideResultCard()">
+                    </select>
+                </div>
+            </div>
+
+            <div class="golf-card">
+                <label class="card-label">Preparation Routine</label>
+                <div class="prep-grid" id="prep-grid-container">
+                    
+                    <div class="prep-card selected" data-minutes="" id="card-ontime" onclick="selectPrepCard(this)">
+                        <div class="icon">🕒</div>
+                        <div class="title">On Time</div>
+                        <div class="desc">Arrive shortly before tee time.</div>
+                        <div class="time-tag" id="tag-ontime">+20 mins</div>
+                    </div>
+
+                    <div class="prep-card" data-minutes="" id="card-basic" onclick="selectPrepCard(this)">
+                        <div class="icon">🏌️</div>
+                        <div class="title">Basic 25</div>
+                        <div class="desc">Hit a small bucket before the round.</div>
+                        <div class="time-tag" id="tag-basic">+30 mins</div>
+                    </div>
+
+                    <div class="prep-card" data-minutes="" id="card-pro" onclick="selectPrepCard(this)">
+                        <div class="icon">⛳</div>
+                        <div class="title">Pro Warmup</div>
+                        <div class="desc">Warm up with balls and putting practice.</div>
+                        <div class="time-tag" id="tag-pro">+40 mins</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <button class="btn-calculate" onclick="calculateLeaveTime()">Calculate My Leave Time</button>
+
+            <div class="result-container" id="resultContainer">
+                <div class="result-card">
+                    <div class="result-title">  Recommended Departure Time</div>
+                    <div class="leave-time-display" id="leaveTimeDisplay">12:00 PM</div>
+                    
+                    <div id="statusBanner" class="status-banner schedule">
+                        <span id="statusIcon">✅</span> <span id="statusText">You are on schedule!</span>
+                    </div>
+
+                    <div class="countdown-text" id="countdownDisplay">
+                        Calculating window...
+                    </div>
+
+                    <div class="breakdown-divider"></div>
+
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <div class="detail-label">  Tee Time</div>
+                            <div class="detail-value" id="breakdownTee">--:--</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">  Drive Time</div>
+                            <div class="detail-value" id="breakdownDrive">-- mins</div>
+                        </div>
+                        <div class="detail-item">
+                            <div class="detail-label">  Warm Up</div>
+                            <div class="detail-value" id="breakdownPrep">-- mins</div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <div class="settings-header">
+                <h2>Settings</h2>
+                <button class="close-settings" onclick="toggleSettingsModal()">&times;</button>
+            </div>
+            
+            <div class="settings-section-title">Drive Times (Minutes)</div>
+            <div id="drive-times-settings">
+                <!-- Dynamically populated drive time rows -->
+            </div>
+
+            <div class="settings-section-title">Warmup Durations (Minutes)</div>
+            <div class="setting-row">
+                <label>On Time (How early)</label>
+                <input type="number" id="setting-ontime" min="0" max="120">
+            </div>
+            <div class="setting-row">
+                <label>Basic 25 Warmup</label>
+                <input type="number" id="setting-basic" min="0" max="120">
+            </div>
+            <div class="setting-row">
+                <label>Pro Warmup</label>
+                <input type="number" id="setting-pro" min="0" max="120">
+            </div>
+
+            <button class="save-settings-btn" onclick="saveSettings()">Save Changes</button>
+        </div>
+    </div>
+
+    <script>
+        // --- COURSE DATA STORAGE (Default values or loaded from localStorage) ---
+        let golfCourses = JSON.parse(localStorage.getItem('golfCourses')) || [
+            { id: "shag_9", name: "Shagganappi Valley 9", driveTime: 15 },
+            { id: "shag_18", name: "Shagganappi 18", driveTime: 15 },
+            { id: "mccall_p3", name: "McCall Lake Par 3", driveTime: 30 },
+            { id: "mccall_18", name: "McCall Lake 18", driveTime: 30 },
+            { id: "lakeview", name: "Lakeview", driveTime: 17 },
+            { id: "confed", name: "Confederation Park", driveTime: 20 },
+            { id: "maple", name: "Maple Ridge", driveTime: 25 }
+        ];
+
+        // Prep times configuration stored or default
+        let prepTimes = JSON.parse(localStorage.getItem('prepTimes')) || {
+            ontime: 20,
+            basic: 30,
+            pro: 40
+        };
+
+        // Global state management object
+        let selectedPrepMinutes = prepTimes.ontime;
+        let globalTargetLeaveDate = null;
+        let countdownIntervalId = null;
+
+        // --- CORE APPLICATION INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initializeCourseDropdown();
+            initDefaultTeeTime();
+            startLiveClock();
+            applyPrepTimesToUI();
+        });
+
+        // Toggle settings modal display
+        function toggleSettingsModal() {
+            const modal = document.getElementById('settingsModal');
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+            } else {
+                populateSettingsInputs();
+                modal.style.display = 'flex';
+            }
+        }
+
+        // Populate values into settings modal fields
+        function populateSettingsInputs() {
+            // Drive times list
+            const driveContainer = document.getElementById('drive-times-settings');
+            driveContainer.innerHTML = '';
+            golfCourses.forEach((course, index) => {
+                driveContainer.innerHTML += `
+                    <div class="setting-row">
+                        <label>${course.name}</label>
+                        <input type="number" id="drive-input-${index}" value="${course.driveTime}" min="0" max="180">
+                    </div>
+                `;
+            });
+
+            // Prep times inputs
+            document.getElementById('setting-ontime').value = prepTimes.ontime;
+            document.getElementById('setting-basic').value = prepTimes.basic;
+            document.getElementById('setting-pro').value = prepTimes.pro;
+        }
+
+        // Save settings from modal to localStorage and update application state
+        function saveSettings() {
+            // Save drive times
+            golfCourses.forEach((course, index) => {
+                const inputVal = document.getElementById(`drive-input-${index}`).value;
+                course.driveTime = parseInt(inputVal, 10) || 0;
+            });
+            localStorage.setItem('golfCourses', JSON.stringify(golfCourses));
+
+            // Save prep times
+            prepTimes.ontime = parseInt(document.getElementById('setting-ontime').value, 10) || 0;
+            prepTimes.basic = parseInt(document.getElementById('setting-basic').value, 10) || 0;
+            prepTimes.pro = parseInt(document.getElementById('setting-pro').value, 10) || 0;
+            localStorage.setItem('prepTimes', JSON.stringify(prepTimes));
+
+            // Update UI elements
+            initializeCourseDropdown();
+            applyPrepTimesToUI();
+            
+            // Re-sync selected prep minutes based on current active card selection
+            const activeCard = document.querySelector('.prep-card.selected');
+            if (activeCard) {
+                if (activeCard.id === 'card-ontime') selectedPrepMinutes = prepTimes.ontime;
+                else if (activeCard.id === 'card-basic') selectedPrepMinutes = prepTimes.basic;
+                else if (activeCard.id === 'card-pro') selectedPrepMinutes = prepTimes.pro;
+            }
+
+            toggleSettingsModal();
+            hideResultCard();
+        }
+
+        // Apply dynamic prep times to cards and tags
+        function applyPrepTimesToUI() {
+            document.getElementById('card-ontime').setAttribute('data-minutes', prepTimes.ontime);
+            document.getElementById('tag-ontime').textContent = `+${prepTimes.ontime} mins`;
+
+            document.getElementById('card-basic').setAttribute('data-minutes', prepTimes.basic);
+            document.getElementById('tag-basic').textContent = `+${prepTimes.basic} mins`;
+
+            document.getElementById('card-pro').setAttribute('data-minutes', prepTimes.pro);
+            document.getElementById('tag-pro').textContent = `+${prepTimes.pro} mins`;
+        }
+
+        // Build cleanly formatted option elements with course names only
+        function initializeCourseDropdown() {
+            const selectEl = document.getElementById('course-select');
+            const currentSelectedValue = selectEl.value; // preserve selection if already set
+            selectEl.innerHTML = '';
+            golfCourses.forEach(course => {
+                const option = document.createElement('option');
+                option.value = course.id;
+                option.textContent = course.name;
+                selectEl.appendChild(option);
+            });
+            if (currentSelectedValue) {
+                selectEl.value = currentSelectedValue;
+            }
+        }
+
+        // Set default tee time picker state to exactly 2 hours out for instant UX checking
+        function initDefaultTeeTime() {
+            const now = new Date();
+            now.setHours(now.getHours() + 2);
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('tee-time').value = `${hours}:${minutes}`;
+        }
+
+        // --- UI INTERACTION LOGIC ---
+        function selectPrepCard(element) {
+            // Prevent clearing and unnecessary layout updates if clicking the already selected card
+            if (element.classList.contains('selected')) return;
+
+            // Remove selection class states on siblings
+            document.querySelectorAll('.prep-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            // Update active state
+            element.classList.add('selected');
+            selectedPrepMinutes = parseInt(element.getAttribute('data-minutes'), 10);
+            
+            // Instantly clear the result view to prevent user confusion on setting changes
+            hideResultCard();
+        }
+
+        // Cleanly dismiss the outdated departure card data when user mutates configurations
+        function hideResultCard() {
+            const container = document.getElementById('resultContainer');
+            container.style.display = 'none';
+            
+            if (countdownIntervalId) {
+                clearInterval(countdownIntervalId);
+                countdownIntervalId = null;
+            }
+            globalTargetLeaveDate = null;
+        }
+
+        // Running Clock module utility
+        function startLiveClock() {
+            const clockEl = document.getElementById('live-clock');
+            setInterval(() => {
+                const now = new Date();
+                clockEl.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            }, 1000);
+        }
+
+        // --- CALCULATION LOGIC ENGINE ---
+        function calculateLeaveTime() {
+            const timeInputValue = document.getElementById('tee-time').value;
+            if (!timeInputValue) {
+                alert("Please pick a valid Tee Time first.");
+                return;
+            }
+
+            const courseId = document.getElementById('course-select').value;
+            const course = golfCourses.find(c => c.id === courseId);
+            const driveTime = course ? course.driveTime : 0;
+
+            // Compute current date components 
+            const now = new Date();
+            const [hours, minutes] = timeInputValue.split(':').map(Number);
+            
+            // Build absolute target Date representations for math optimization
+            let teeDate = new Date();
+            teeDate.setHours(hours, minutes, 0, 0);
+
+            // Handle midnight / next-day roll calculations smoothly
+            if (teeDate < now && (now - teeDate) > 30 * 60 * 1000) { 
+                teeDate.setDate(teeDate.getDate() + 1);
+            }
+
+            // Calculation Core execution formula: Leave Time = Tee Time - Prep - Drive
+            const totalBufferMinutes = driveTime + selectedPrepMinutes;
+            let leaveDate = new Date(teeDate.getTime() - (totalBufferMinutes * 60 * 1000));
+            
+            // Round the final departure time down to the nearest 5-minute interval
+            const currentMins = leaveDate.getMinutes();
+            const roundedMins = Math.floor(currentMins / 5) * 5;
+            leaveDate.setMinutes(roundedMins);
+            leaveDate.setSeconds(0, 0);
+
+            globalTargetLeaveDate = leaveDate; // Bind tracking instance state globally
+
+            // Format strings outputs
+            const formattedLeaveTime = leaveDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const formattedTeeTime = teeDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            // UI Render Elements mapping updates
+            document.getElementById('leaveTimeDisplay').textContent = formattedLeaveTime;
+            document.getElementById('breakdownTee').textContent = formattedTeeTime;
+            document.getElementById('breakdownDrive').textContent = `${driveTime} mins`;
+            document.getElementById('breakdownPrep').textContent = `${selectedPrepMinutes} mins`;
+
+            // Display Container via Smooth animation wrapper reveal hooks
+            const container = document.getElementById('resultContainer');
+            container.style.display = 'block';
+
+            // Fire running state updates checking monitors loops instantly
+            runCountdownUpdates();
+            
+            if(countdownIntervalId) clearInterval(countdownIntervalId);
+            countdownIntervalId = setInterval(runCountdownUpdates, 1000);
+        }
+
+        // Dynamic warning alert indicators updates loops
+        function runCountdownUpdates() {
+            if (!globalTargetLeaveDate) return;
+
+            const now = new Date();
+            const differenceMs = globalTargetLeaveDate - now;
+
+            const statusBanner = document.getElementById('statusBanner');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const countdownDisplay = document.getElementById('countdownDisplay');
+
+            // Evaluation branch check logic checks if late
+            if (differenceMs <= 0) {
+                statusBanner.className = "status-banner late";
+                statusIcon.textContent = "";
+                statusText.textContent = "You are running late!";
+                
+                const overdueMs = Math.abs(differenceMs);
+                const hours = Math.floor(overdueMs / (1000 * 60 * 60));
+                const mins = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                let stringOut = `You should have left `;
+                if(hours > 0) stringOut += `${hours}h `;
+                stringOut += `${mins}m ago.`;
+                countdownDisplay.textContent = stringOut;
+            } else {
+                statusBanner.className = "status-banner schedule";
+                statusIcon.textContent = "";
+                statusText.textContent = "You are on schedule!";
+
+                const hours = Math.floor(differenceMs / (1000 * 60 * 60));
+                const mins = Math.floor((differenceMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                let stringOut = "You have ";
+                if(hours > 0) stringOut += `${hours} hour${hours > 1 ? 's' : ''} `;
+                stringOut += `${mins} minute${mins !== 1 ? 's' : ''} until departure.`;
+                countdownDisplay.textContent = stringOut;
+            }
+        }
+    </script>
+</body>
+</html>
